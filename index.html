@@ -159,7 +159,20 @@ button {
 }
 
 .instructions {
-    display: none;
+    display: block;
+    color: white;
+    margin-top: 15px;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    max-width: 360px;
+}
+
+.instructions p {
+    margin: 4px 0;
+    line-height: 1.4;
 }
 
 /* Mobile Controls - Default (shown on mobile) */
@@ -240,13 +253,9 @@ button {
     }
 
     .instructions {
-        display: block;
-        color: white;
         margin-top: 20px;
-        text-align: center;
-        background: rgba(0, 0, 0, 0.2);
         padding: 15px;
-        border-radius: 8px;
+        max-width: 450px;
     }
 
     .instructions p {
