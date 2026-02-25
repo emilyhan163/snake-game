@@ -306,9 +306,9 @@
 
         const FOOD_COUNT = 3;
         const EFFECT_DURATION = 3000; // milliseconds
-        const NORMAL_SPEED = 100;
-        const SLOW_SPEED = 150;
-        const FAST_SPEED = 60;
+        const NORMAL_SPEED = 150; // 从100改为150，减慢速度
+        const SLOW_SPEED = 200; // 从150改为200
+        const FAST_SPEED = 100; // 从60改为100
 
         // Effect state
         let foods = [];
@@ -667,7 +667,7 @@
             initGame();
             gameRunning = true;
             gamePaused = false;
-            gameLoop = setInterval(update, 100);
+            gameLoop = setInterval(update, NORMAL_SPEED); // 使用 NORMAL_SPEED
             startBtn.textContent = '游戏中...';
         }
 
@@ -688,7 +688,7 @@
             gameRunning = true;
             gamePaused = false;
             clearInterval(gameLoop);
-            gameLoop = setInterval(update, 100);
+            gameLoop = setInterval(update, NORMAL_SPEED); // 使用 NORMAL_SPEED
             startBtn.textContent = '游戏中...';
         }
 
