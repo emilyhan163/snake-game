@@ -212,6 +212,10 @@
             scoreDisplay.textContent = '得分: ' + score;
             spawnAllFoods();
             gameOverScreen.style.display = 'none';
+            // Reset effect state
+            effectType = null;
+            effectEndTime = 0;
+            currentSpeed = NORMAL_SPEED;
         }
 
         function getRandomFoodType() {
@@ -462,6 +466,12 @@
         function update() {
             if (!gameRunning || gamePaused) return;
 
+            // Check if effect has expired
+            if (effectType && Date.now() > effectEndTime) {
+              effectType = null;
+              updateGameSpeed(NORMAL_SPEED);
+            }
+
             const head = { x: snake[0].x + dx, y: snake[0].y + dy };
 
             // 检查是否撞墙
@@ -541,6 +551,12 @@
             if (!gameRunning) return;
             gamePaused = !gamePaused;
             pauseBtn.textContent = gamePaused ? '继续' : '暂停';
+        }
+
+        function updateGameSpeed(newSpeed) {
+          currentSpeed = newSpeed;
+          clearInterval(gameLoop);
+          gameLoop = setInterval(update, currentSpeed);
         }
 
         function restartGame() {
