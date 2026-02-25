@@ -2,7 +2,10 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- 性能优化 -->
+    <meta name="format-detection" content="telephone=no">
+    <meta name="msapplication-tap-highlight" content="no">
     <!-- PWA Meta Tags -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#764ba2">
@@ -10,6 +13,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="贪吃蛇">
     <link rel="apple-touch-icon" href="icons/icon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <title>贪吃蛇游戏</title>
     <style>
 * {
@@ -175,6 +179,15 @@ button {
     line-height: 1.4;
 }
 
+/* 移动端显示简化版说明 */
+.instructions .desktop-only {
+    display: none;
+}
+
+.instructions .mobile-only {
+    display: block;
+}
+
 /* Mobile Controls - Default (shown on mobile) */
 .mobile-controls {
     display: grid;
@@ -263,6 +276,14 @@ button {
         font-size: 14px;
     }
 
+    .instructions .desktop-only {
+        display: block;
+    }
+
+    .instructions .mobile-only {
+        display: none;
+    }
+
     .mobile-controls {
         display: none;
     }
@@ -330,7 +351,8 @@ button {
     </div>
 
     <div class="instructions">
-        <p>🎮 使用方向键 ↑ ↓ ← → 或 WASD 控制蛇的移动</p>
+        <p class="desktop-only">🎮 使用方向键 ↑ ↓ ← → 或 WASD 控制蛇的移动</p>
+        <p class="mobile-only">📱 使用下方按钮或滑动屏幕控制</p>
         <p>⭕ 圆形=10分 | ⬜ 方块=25分 | 🔺 三角=5分(减速) | 🔷 菱形=15分(加速)</p>
         <p>⚠️ 不要撞到墙壁或自己的身体</p>
     </div>
