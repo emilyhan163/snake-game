@@ -40,6 +40,16 @@
             background: #f0f0f0;
         }
 
+        #gameCanvas.effect-slow {
+            border-color: #9b59b6 !important;
+            box-shadow: 0 0 15px #9b59b6;
+        }
+
+        #gameCanvas.effect-speed {
+            border-color: #00bcd4 !important;
+            box-shadow: 0 0 15px #00bcd4;
+        }
+
         #controls {
             display: flex;
             gap: 20px;
@@ -401,6 +411,14 @@
             // 清空画布
             ctx.fillStyle = '#f0f0f0';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Update canvas border for effects
+            canvas.classList.remove('effect-slow', 'effect-speed');
+            if (effectType === 'slow') {
+              canvas.classList.add('effect-slow');
+            } else if (effectType === 'speed') {
+              canvas.classList.add('effect-speed');
+            }
 
             // 绘制网格
             ctx.strokeStyle = '#ddd';
