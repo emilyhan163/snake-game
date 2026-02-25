@@ -173,6 +173,34 @@
         let gamePaused = false;
         let gameLoop;
 
+        // Food types configuration
+        const FOOD_TYPES = {
+          regular: { points: 10, color: '#e74c3c', shape: 'circle' },
+          bonus: { points: 25, color: '#f1c40f', shape: 'square' },
+          poison: { points: 5, color: '#9b59b6', shape: 'triangle' },
+          speed: { points: 15, color: '#00bcd4', shape: 'diamond' }
+        };
+
+        // Spawn weights (cumulative)
+        const FOOD_WEIGHTS = [
+          { type: 'regular', threshold: 0.50 },
+          { type: 'bonus', threshold: 0.75 },
+          { type: 'poison', threshold: 0.90 },
+          { type: 'speed', threshold: 1.00 }
+        ];
+
+        const FOOD_COUNT = 3;
+        const EFFECT_DURATION = 3000; // milliseconds
+        const NORMAL_SPEED = 100;
+        const SLOW_SPEED = 150;
+        const FAST_SPEED = 60;
+
+        // Effect state
+        let foods = [];
+        let effectType = null;
+        let effectEndTime = 0;
+        let currentSpeed = NORMAL_SPEED;
+
         function initGame() {
             snake = [
                 { x: 10, y: 10 },
