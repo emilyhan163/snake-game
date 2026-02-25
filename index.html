@@ -303,7 +303,7 @@ button {
     </style>
 </head>
 <body>
-    <h1>🐍 贪吃蛇游戏</h1>
+    <h1>🐍 贪吃蛇</h1>
     
     <div id="gameContainer">
         <canvas id="gameCanvas" width="400" height="400"></canvas>
@@ -324,10 +324,9 @@ button {
         <p>🎮 使用方向键 ↑ ↓ ← → 或 WASD 控制蛇的移动</p>
         <p>⭕ 圆形=10分 | ⬜ 方块=25分 | 🔺 三角=5分(减速) | 🔷 菱形=15分(加速)</p>
         <p>⚠️ 不要撞到墙壁或自己的身体</p>
-        <p style="display: none;" id="mobileTip">📱 使用下方按钮或滑动屏幕控制蛇的移动</p>
     </div>
 
-    <!-- 移动端控制按钮 -->
+    <!-- Mobile Controls -->
     <div class="mobile-controls" id="mobileControls">
         <div class="control-btn empty"></div>
         <div class="control-btn" id="upBtn">⬆️</div>
@@ -878,16 +877,6 @@ button {
                 }
             }
         }, { passive: true });
-
-        // 检测移动设备
-        function isMobile() {
-            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        }
-
-        // 显示移动端提示
-        if (isMobile()) {
-            document.getElementById('mobileTip').style.display = 'block';
-        }
 
         // 初始化画布
         initGame();
