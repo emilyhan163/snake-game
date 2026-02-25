@@ -298,6 +298,101 @@
           }
         }
 
+        function drawFood(food) {
+          const config = FOOD_TYPES[food.type];
+          const centerX = food.x * gridSize + gridSize / 2;
+          const centerY = food.y * gridSize + gridSize / 2;
+          const size = gridSize / 2 - 2;
+
+          ctx.fillStyle = config.color;
+
+          switch (config.shape) {
+            case 'circle':
+              // Regular food - circle with highlight
+              ctx.beginPath();
+              ctx.arc(centerX, centerY, size, 0, Math.PI * 2);
+              ctx.fill();
+              // Highlight
+              ctx.fillStyle = shadeColor(config.color, -20);
+              ctx.beginPath();
+              ctx.arc(centerX - 3, centerY - 3, 3, 0, Math.PI * 2);
+              ctx.fill();
+              break;
+
+            case 'square':
+              // Bonus food - square with glow
+              const squareSize = gridSize - 6;
+              ctx.shadowColor = config.color;
+              ctx.shadowBlur = 10;
+              ctx.fillRect(
+                food.x * gridSize + 3,
+                food.y * gridSize + 3,
+                squareSize,
+                squareSize
+              );
+              ctx.shadowBlur = 0;
+              // Inner highlight
+              ctx.fillStyle = shadeColor(config.color, 30);
+              ctx.fillRect(
+                food.x * gridSize + 5,
+                food.y * gridSize + 5,
+                squareSize / 2,
+                squareSize / 2
+              );
+              break;
+
+            case 'triangle':
+              // Poison food - triangle pointing down
+              ctx.beginPath();
+              ctx.moveTo(centerX, food.y * gridSize + gridSize - 3);
+              ctx.lineTo(food.x * gridSize + 3, food.y * gridSize + 5);
+              ctx.lineTo(food.x * gridSize + gridSize - 3, food.y * gridSize + 5);
+              ctx.closePath();
+              ctx.fill();
+              // Skull indicator
+              ctx.fillStyle = '#fff';
+              ctx.beginPath();
+              ctx.arc(centerX, centerY, 3, 0, Math.PI * 2);
+              ctx.fill();
+              break;
+
+            case 'diamond':
+              // Speed food - rotated square
+              ctx.beginPath();
+              ctx.moveTo(centerX, food.y * gridSize + 2);
+              ctx.lineTo(food.x * gridSize + gridSize - 2, centerY);
+              ctx.lineTo(centerX, food.y * gridSize + gridSize - 2);
+              ctx.lineTo(food.x * gridSize + 2, centerY);
+              ctx.closePath();
+              ctx.fill();
+              // Lightning bolt indicator
+              ctx.fillStyle = '#fff';
+              ctx.beginPath();
+              ctx.moveTo(centerX, centerY - 4);
+              ctx.lineTo(centerX + 2, centerY);
+              ctx.lineTo(centerX - 1, centerY);
+              ctx.lineTo(centerX, centerY + 4);
+              ctx.lineTo(centerX - 2, centerY);
+              ctx.lineTo(centerX + 1, centerY);
+              ctx.closePath();
+              ctx.fill();
+              break;
+          }
+        }
+
+        function shadeColor(color, percent) {
+          const num = parseInt(color.replace('#', ''), 16);
+          const amt = Math.round(2.55 * percent);
+          const R = (num >> 16) + amt;
+          const G = (num >> 8 & 0x00FF) + amt;
+          const B = (num & 0x0000FF) + amt;
+          return '#' + (0x1000000 +
+            (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+            (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+            (B < 255 ? B < 1 ? 0 : B : 255)
+          ).toString(16).slice(1);
+        }
+
         function draw() {
             // 清空画布
             ctx.fillStyle = '#f0f0f0';
@@ -358,29 +453,10 @@
                 }
             });
 
-            // 绘制食物
-            ctx.fillStyle = '#e74c3c';
-            ctx.beginPath();
-            ctx.arc(
-                food.x * gridSize + gridSize / 2,
-                food.y * gridSize + gridSize / 2,
-                gridSize / 2 - 2,
-                0,
-                Math.PI * 2
-            );
-            ctx.fill();
-            
-            // 绘制食物的高光
-            ctx.fillStyle = '#c0392b';
-            ctx.beginPath();
-            ctx.arc(
-                food.x * gridSize + gridSize / 2 - 3,
-                food.y * gridSize + gridSize / 2 - 3,
-                3,
-                0,
-                Math.PI * 2
-            );
-            ctx.fill();
+            // Draw all foods
+            for (const food of foods) {
+              drawFood(food);
+            }
         }
 
         function update() {
