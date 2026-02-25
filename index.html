@@ -399,7 +399,7 @@ button {
             score = 0;
             scoreDisplay.textContent = '得分: ' + score;
             spawnAllFoods();
-            gameOverScreen.style.display = 'none';
+            gameOverScreen.classList.remove('show');
             // Reset effect state
             effectType = null;
             effectEndTime = 0;
@@ -728,10 +728,11 @@ button {
         }
 
         function gameOver() {
+            releaseWakeLock();
             gameRunning = false;
             clearInterval(gameLoop);
             finalScoreDisplay.textContent = '最终得分: ' + score;
-            gameOverScreen.style.display = 'block';
+            gameOverScreen.classList.add('show');
         }
 
         function startGame() {
@@ -741,12 +742,18 @@ button {
             gamePaused = false;
             gameLoop = setInterval(update, NORMAL_SPEED); // 使用 NORMAL_SPEED
             startBtn.textContent = '游戏中...';
+            requestWakeLock();
         }
 
         function togglePause() {
             if (!gameRunning) return;
             gamePaused = !gamePaused;
             pauseBtn.textContent = gamePaused ? '继续' : '暂停';
+            if (gamePaused) {
+                releaseWakeLock();
+            } else {
+                requestWakeLock();
+            }
         }
 
         function updateGameSpeed(newSpeed) {
@@ -878,9 +885,65 @@ button {
             }
         }, { passive: true });
 
+        // Wake Lock API - keep screen on during gameplay
+        let wakeLock = null;
+
+        async function requestWakeLock() {
+            if ('wakeLock' in navigator && gameRunning && !gamePaused) {
+                try {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                } catch (err) {
+                    console.log('Wake Lock error:', err);
+                }
+            }
+        }
+
+        function releaseWakeLock() {
+            if (wakeLock) {
+                wakeLock.release();
+                wakeLock = null;
+            }
+        }
+
+        // Handle visibility change for wake lock
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && wakeLock) {
+                releaseWakeLock();
+            } else if (!document.hidden && gameRunning && !gamePaused) {
+                requestWakeLock();
+            }
+        });
+
+        // Tap canvas to start game
+        canvas.addEventListener('click', () => {
+            if (!gameRunning) {
+                startGame();
+            }
+        });
+
+        // Prevent context menu on long press for mobile
+        document.addEventListener('contextmenu', (e) => {
+            if (window.innerWidth <= 600) {
+                e.preventDefault();
+            }
+        });
+
         // 初始化画布
         initGame();
         draw();
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then((registration) => {
+                        console.log('Service Worker registered:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.log('Service Worker registration failed:', error);
+                    });
+            });
+        }
     </script>
 </body>
 </html>
