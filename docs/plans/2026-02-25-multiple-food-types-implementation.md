@@ -1,0 +1,524 @@
+# Multiple Food Types Implementation Plan
+
+> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+
+**Goal:** Add 4 food types with different shapes, points, and temporary effects, with 2-3 foods on screen simultaneously.
+
+**Architecture:** Replace single `food` object with `foods` array. Add weighted random spawning, shape-based rendering, and a time-based effect system for poison/speed foods.
+
+**Tech Stack:** HTML5 Canvas, Vanilla JavaScript, CSS3
+
+---
+
+### Task 1: Add Food Type Constants and State Variables
+
+**Files:**
+- Modify: `index.html:164-174` (variable declarations)
+
+**Step 1: Add food type definitions and effect state**
+
+Add after line 174 (after `let gameLoop;`):
+
+```javascript
+// Food types configuration
+const FOOD_TYPES = {
+  regular: { points: 10, color: '#e74c3c', shape: 'circle' },
+  bonus: { points: 25, color: '#f1c40f', shape: 'square' },
+  poison: { points: 5, color: '#9b59b6', shape: 'triangle' },
+  speed: { points: 15, color: '#00bcd4', shape: 'diamond' }
+};
+
+// Spawn weights (cumulative)
+const FOOD_WEIGHTS = [
+  { type: 'regular', threshold: 0.50 },
+  { type: 'bonus', threshold: 0.75 },
+  { type: 'poison', threshold: 0.90 },
+  { type: 'speed', threshold: 1.00 }
+];
+
+const FOOD_COUNT = 3;
+const EFFECT_DURATION = 3000; // milliseconds
+const NORMAL_SPEED = 100;
+const SLOW_SPEED = 150;
+const FAST_SPEED = 60;
+
+// Effect state
+let foods = [];
+let effectType = null;
+let effectEndTime = 0;
+let currentSpeed = NORMAL_SPEED;
+```
+
+**Step 2: Verify syntax by opening in browser**
+
+Open `index.html` in browser and check console for errors.
+Expected: No errors (variables declared but not yet used)
+
+**Step 3: Commit**
+
+```bash
+git add index.html
+git commit -m "feat: add food type constants and effect state variables"
+```
+
+---
+
+### Task 2: Replace Single Food with Foods Array
+
+**Files:**
+- Modify: `index.html:168` (remove old food variable - already replaced in Task 1)
+- Modify: `index.html:190-203` (generateFood function)
+
+**Step 1: Rewrite generateFood as spawnSingleFood**
+
+Replace the `generateFood()` function (lines 190-203) with:
+
+```javascript
+function getRandomFoodType() {
+  const rand = Math.random();
+  for (const weight of FOOD_WEIGHTS) {
+    if (rand < weight.threshold) {
+      return weight.type;
+    }
+  }
+  return 'regular';
+}
+
+function spawnSingleFood(type = null) {
+  const foodType = type || getRandomFoodType();
+  let attempts = 0;
+  const maxAttempts = 10;
+
+  while (attempts < maxAttempts) {
+    const newFood = {
+      x: Math.floor(Math.random() * tileCount),
+      y: Math.floor(Math.random() * tileCount),
+      type: foodType
+    };
+
+    // Check collision with snake
+    let collision = false;
+    for (const segment of snake) {
+      if (segment.x === newFood.x && segment.y === newFood.y) {
+        collision = true;
+        break;
+      }
+    }
+
+    // Check collision with existing foods
+    if (!collision) {
+      for (const food of foods) {
+        if (food.x === newFood.x && food.y === newFood.y) {
+          collision = true;
+          break;
+        }
+      }
+    }
+
+    if (!collision) {
+      return newFood;
+    }
+    attempts++;
+  }
+
+  // Fallback: find first available cell
+  for (let y = 0; y < tileCount; y++) {
+    for (let x = 0; x < tileCount; x++) {
+      let occupied = false;
+      for (const segment of snake) {
+        if (segment.x === x && segment.y === y) {
+          occupied = true;
+          break;
+        }
+      }
+      if (!occupied) {
+        for (const food of foods) {
+          if (food.x === x && food.y === y) {
+            occupied = true;
+            break;
+          }
+        }
+      }
+      if (!occupied) {
+        return { x, y, type: foodType };
+      }
+    }
+  }
+
+  return null; // No space available
+}
+
+function spawnAllFoods() {
+  foods = [];
+  for (let i = 0; i < FOOD_COUNT; i++) {
+    const food = spawnSingleFood();
+    if (food) {
+      foods.push(food);
+    }
+  }
+}
+```
+
+**Step 2: Update initGame to use spawnAllFoods**
+
+Replace line 186 (`generateFood();`) with:
+
+```javascript
+spawnAllFoods();
+```
+
+**Step 3: Verify in browser**
+
+Open `index.html`, click "开始游戏".
+Expected: Game starts, no console errors
+
+**Step 4: Commit**
+
+```bash
+git add index.html
+git commit -m "feat: replace single food with foods array and spawn system"
+```
+
+---
+
+### Task 3: Add Shape-Based Food Rendering
+
+**Files:**
+- Modify: `index.html:265-287` (food drawing section in draw function)
+
+**Step 1: Add drawFood function**
+
+Add this function before the `draw()` function (around line 205):
+
+```javascript
+function drawFood(food) {
+  const config = FOOD_TYPES[food.type];
+  const centerX = food.x * gridSize + gridSize / 2;
+  const centerY = food.y * gridSize + gridSize / 2;
+  const size = gridSize / 2 - 2;
+
+  ctx.fillStyle = config.color;
+
+  switch (config.shape) {
+    case 'circle':
+      // Regular food - circle with highlight
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, size, 0, Math.PI * 2);
+      ctx.fill();
+      // Highlight
+      ctx.fillStyle = shadeColor(config.color, -20);
+      ctx.beginPath();
+      ctx.arc(centerX - 3, centerY - 3, 3, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+
+    case 'square':
+      // Bonus food - square with glow
+      const squareSize = gridSize - 6;
+      ctx.shadowColor = config.color;
+      ctx.shadowBlur = 10;
+      ctx.fillRect(
+        food.x * gridSize + 3,
+        food.y * gridSize + 3,
+        squareSize,
+        squareSize
+      );
+      ctx.shadowBlur = 0;
+      // Inner highlight
+      ctx.fillStyle = shadeColor(config.color, 30);
+      ctx.fillRect(
+        food.x * gridSize + 5,
+        food.y * gridSize + 5,
+        squareSize / 2,
+        squareSize / 2
+      );
+      break;
+
+    case 'triangle':
+      // Poison food - triangle pointing down
+      ctx.beginPath();
+      ctx.moveTo(centerX, food.y * gridSize + gridSize - 3);
+      ctx.lineTo(food.x * gridSize + 3, food.y * gridSize + 5);
+      ctx.lineTo(food.x * gridSize + gridSize - 3, food.y * gridSize + 5);
+      ctx.closePath();
+      ctx.fill();
+      // Skull indicator
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 3, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+
+    case 'diamond':
+      // Speed food - rotated square
+      ctx.beginPath();
+      ctx.moveTo(centerX, food.y * gridSize + 2);
+      ctx.lineTo(food.x * gridSize + gridSize - 2, centerY);
+      ctx.lineTo(centerX, food.y * gridSize + gridSize - 2);
+      ctx.lineTo(food.x * gridSize + 2, centerY);
+      ctx.closePath();
+      ctx.fill();
+      // Lightning bolt indicator
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY - 4);
+      ctx.lineTo(centerX + 2, centerY);
+      ctx.lineTo(centerX - 1, centerY);
+      ctx.lineTo(centerX, centerY + 4);
+      ctx.lineTo(centerX - 2, centerY);
+      ctx.lineTo(centerX + 1, centerY);
+      ctx.closePath();
+      ctx.fill();
+      break;
+  }
+}
+
+function shadeColor(color, percent) {
+  const num = parseInt(color.replace('#', ''), 16);
+  const amt = Math.round(2.55 * percent);
+  const R = (num >> 16) + amt;
+  const G = (num >> 8 & 0x00FF) + amt;
+  const B = (num & 0x0000FF) + amt;
+  return '#' + (0x1000000 +
+    (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+    (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+    (B < 255 ? B < 1 ? 0 : B : 255)
+  ).toString(16).slice(1);
+}
+```
+
+**Step 2: Update draw function to render all foods**
+
+Replace the food drawing section (lines 265-287) with:
+
+```javascript
+// Draw all foods
+for (const food of foods) {
+  drawFood(food);
+}
+```
+
+**Step 3: Verify in browser**
+
+Open `index.html`, click "开始游戏".
+Expected: See 3 foods with different shapes (circle, square, triangle, or diamond)
+
+**Step 4: Commit**
+
+```bash
+git add index.html
+git commit -m "feat: add shape-based food rendering for all food types"
+```
+
+---
+
+### Task 4: Implement Collision Detection with Multiple Foods
+
+**Files:**
+- Modify: `index.html:311-318` (food collision check in update function)
+
+**Step 1: Update food collision logic**
+
+Replace the food collision section (lines 311-318) with:
+
+```javascript
+// Check food collisions
+let eatenFoodIndex = -1;
+for (let i = 0; i < foods.length; i++) {
+  if (head.x === foods[i].x && head.y === foods[i].y) {
+    eatenFoodIndex = i;
+    break;
+  }
+}
+
+if (eatenFoodIndex !== -1) {
+  const eatenFood = foods[eatenFoodIndex];
+  const config = FOOD_TYPES[eatenFood.type];
+
+  // Add points
+  score += config.points;
+  scoreDisplay.textContent = '得分: ' + score;
+
+  // Apply effects for poison and speed
+  if (eatenFood.type === 'poison') {
+    effectType = 'slow';
+    effectEndTime = Date.now() + EFFECT_DURATION;
+    updateGameSpeed(SLOW_SPEED);
+  } else if (eatenFood.type === 'speed') {
+    effectType = 'speed';
+    effectEndTime = Date.now() + EFFECT_DURATION;
+    updateGameSpeed(FAST_SPEED);
+  }
+
+  // Remove eaten food and spawn new one
+  foods.splice(eatenFoodIndex, 1);
+  const newFood = spawnSingleFood();
+  if (newFood) {
+    foods.push(newFood);
+  }
+} else {
+  snake.pop();
+}
+```
+
+**Step 2: Verify in browser**
+
+Open `index.html`, play the game, eat different foods.
+Expected: Different point values awarded
+
+**Step 3: Commit**
+
+```bash
+git add index.html
+git commit -m "feat: implement collision detection with multiple food types"
+```
+
+---
+
+### Task 5: Add Effect System with Speed Changes
+
+**Files:**
+- Modify: `index.html:290` (update function)
+
+**Step 1: Add updateGameSpeed function**
+
+Add this function after `togglePause()` function (around line 343):
+
+```javascript
+function updateGameSpeed(newSpeed) {
+  currentSpeed = newSpeed;
+  clearInterval(gameLoop);
+  gameLoop = setInterval(update, currentSpeed);
+}
+```
+
+**Step 2: Add effect checking in update function**
+
+Add at the beginning of the `update()` function (after line 291):
+
+```javascript
+// Check if effect has expired
+if (effectType && Date.now() > effectEndTime) {
+  effectType = null;
+  updateGameSpeed(NORMAL_SPEED);
+}
+```
+
+**Step 3: Verify in browser**
+
+Open `index.html`, eat poison or speed food.
+Expected: Snake speed changes for ~3 seconds, then returns to normal
+
+**Step 4: Commit**
+
+```bash
+git add index.html
+git commit -m "feat: add effect system with temporary speed changes"
+```
+
+---
+
+### Task 6: Add Visual Feedback for Active Effects
+
+**Files:**
+- Modify: `index.html:37-41` (canvas styling)
+- Modify: `index.html:206-208` (draw function - clear canvas)
+
+**Step 1: Add CSS for effect states**
+
+Add after line 41 (after `#gameCanvas` styles):
+
+```css
+#gameCanvas.effect-slow {
+  border-color: #9b59b6 !important;
+  box-shadow: 0 0 15px #9b59b6;
+}
+
+#gameCanvas.effect-speed {
+  border-color: #00bcd4 !important;
+  box-shadow: 0 0 15px #00bcd4;
+}
+```
+
+**Step 2: Update draw function to apply effect styling**
+
+Add after the canvas clear (after line 208):
+
+```javascript
+// Update canvas border for effects
+canvas.classList.remove('effect-slow', 'effect-speed');
+if (effectType === 'slow') {
+  canvas.classList.add('effect-slow');
+} else if (effectType === 'speed') {
+  canvas.classList.add('effect-speed');
+}
+```
+
+**Step 3: Verify in browser**
+
+Open `index.html`, eat poison or speed food.
+Expected: Canvas border glows purple (slow) or cyan (speed) during effect
+
+**Step 4: Commit**
+
+```bash
+git add index.html
+git commit -m "feat: add visual feedback for active effects"
+```
+
+---
+
+### Task 7: Update Instructions and Final Polish
+
+**Files:**
+- Modify: `index.html:148-152` (instructions section)
+
+**Step 1: Update game instructions**
+
+Replace the instructions div (lines 148-152) with:
+
+```html
+<div class="instructions">
+    <p>🎮 使用方向键 ↑ ↓ ← → 或 WASD 控制蛇的移动</p>
+    <p>⭕ 圆形=10分 | ⬜ 方块=25分 | 🔺 三角=5分(减速) | 🔷 菱形=15分(加速)</p>
+    <p>⚠️ 不要撞到墙壁或自己的身体</p>
+</div>
+```
+
+**Step 2: Full game test**
+
+Open `index.html` and play a complete game:
+- Verify 3 foods spawn initially
+- Verify all 4 food types appear with correct shapes
+- Verify point values are correct
+- Verify slow/speed effects work
+- Verify visual feedback shows during effects
+- Verify game over and restart work correctly
+
+**Step 3: Final commit**
+
+```bash
+git add index.html
+git commit -m "feat: complete multiple food types implementation
+
+- Add 4 food types with different shapes and effects
+- Implement weighted spawn distribution
+- Add temporary speed/slow effects
+- Add visual feedback for active effects"
+```
+
+---
+
+## Summary
+
+| Task | Description | Lines Changed |
+|------|-------------|---------------|
+| 1 | Constants and state variables | ~30 |
+| 2 | Foods array and spawn system | ~60 |
+| 3 | Shape-based rendering | ~80 |
+| 4 | Collision detection | ~30 |
+| 5 | Effect system | ~15 |
+| 6 | Visual feedback | ~15 |
+| 7 | Instructions and polish | ~5 |
+
+**Total:** ~235 lines added/modified in `index.html`
