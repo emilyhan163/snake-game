@@ -1,4 +1,4 @@
-const CACHE_NAME = 'snake-game-v3';
+const CACHE_NAME = 'snake-game-v4';  // 更新版本号强制刷新缓存
 const ASSETS = [
   './',
   './index.html',
