@@ -174,18 +174,11 @@ button {
     display: block;
     color: white;
     text-align: center;
-    background: linear-gradient(to top, rgba(118, 75, 162, 0.95), rgba(118, 75, 162, 0.85));
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    padding: 15px;
-    padding-bottom: calc(15px + env(safe-area-inset-bottom, 0px));
-    margin-top: 20px;
-    margin-bottom: 80px;
+    margin-top: 15px;
     font-size: 11px;
-    border-radius: 8px;
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
     max-width: 360px;
     width: 100%;
+    opacity: 0.9;
 }
 
 .instructions p {
@@ -371,11 +364,6 @@ button {
         <button id="restartBtn">重新开始</button>
     </div>
 
-    <div class="instructions">
-        <p class="desktop-only">🎮 使用方向键 ↑ ↓ ← → 或 WASD 控制蛇的移动</p>
-        <p class="mobile-only">📱 使用下方按钮或滑动屏幕控制 | ⭕10分 ⬜25分 🔺5分 🔷15分</p>
-    </div>
-
     <!-- Mobile Controls -->
     <div class="mobile-controls" id="mobileControls">
         <div class="control-btn empty"></div>
@@ -387,6 +375,11 @@ button {
         <div class="control-btn empty"></div>
         <div class="control-btn" id="downBtn">⬇️</div>
         <div class="control-btn empty"></div>
+    </div>
+
+    <div class="instructions">
+        <p class="desktop-only">🎮 使用方向键 ↑ ↓ ← → 或 WASD 控制蛇的移动</p>
+        <p class="mobile-only">📱 使用下方按钮或滑动屏幕控制 | ⭕10分 ⬜25分 🔺5分 🔷15分</p>
     </div>
 
     <script>
