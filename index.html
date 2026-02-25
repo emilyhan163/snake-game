@@ -165,7 +165,6 @@
         const tileCount = canvas.width / gridSize;
 
         let snake = [];
-        let food = {};
         let dx = 0;
         let dy = 0;
         let score = 0;
@@ -211,23 +210,92 @@
             dy = 0;
             score = 0;
             scoreDisplay.textContent = '得分: ' + score;
-            generateFood();
+            spawnAllFoods();
             gameOverScreen.style.display = 'none';
         }
 
-        function generateFood() {
-            food = {
-                x: Math.floor(Math.random() * tileCount),
-                y: Math.floor(Math.random() * tileCount)
-            };
-            
-            // 确保食物不会出现在蛇身上
-            for (let segment of snake) {
-                if (segment.x === food.x && segment.y === food.y) {
-                    generateFood();
-                    return;
-                }
+        function getRandomFoodType() {
+          const rand = Math.random();
+          for (const weight of FOOD_WEIGHTS) {
+            if (rand < weight.threshold) {
+              return weight.type;
             }
+          }
+          return 'regular';
+        }
+
+        function spawnSingleFood(type = null) {
+          const foodType = type || getRandomFoodType();
+          let attempts = 0;
+          const maxAttempts = 10;
+
+          while (attempts < maxAttempts) {
+            const newFood = {
+              x: Math.floor(Math.random() * tileCount),
+              y: Math.floor(Math.random() * tileCount),
+              type: foodType
+            };
+
+            // Check collision with snake
+            let collision = false;
+            for (const segment of snake) {
+              if (segment.x === newFood.x && segment.y === newFood.y) {
+                collision = true;
+                break;
+              }
+            }
+
+            // Check collision with existing foods
+            if (!collision) {
+              for (const food of foods) {
+                if (food.x === newFood.x && food.y === newFood.y) {
+                  collision = true;
+                  break;
+                }
+              }
+            }
+
+            if (!collision) {
+              return newFood;
+            }
+            attempts++;
+          }
+
+          // Fallback: find first available cell
+          for (let y = 0; y < tileCount; y++) {
+            for (let x = 0; x < tileCount; x++) {
+              let occupied = false;
+              for (const segment of snake) {
+                if (segment.x === x && segment.y === y) {
+                  occupied = true;
+                  break;
+                }
+              }
+              if (!occupied) {
+                for (const food of foods) {
+                  if (food.x === x && food.y === y) {
+                    occupied = true;
+                    break;
+                  }
+                }
+              }
+              if (!occupied) {
+                return { x, y, type: foodType };
+              }
+            }
+          }
+
+          return null; // No space available
+        }
+
+        function spawnAllFoods() {
+          foods = [];
+          for (let i = 0; i < FOOD_COUNT; i++) {
+            const food = spawnSingleFood();
+            if (food) {
+              foods.push(food);
+            }
+          }
         }
 
         function draw() {
